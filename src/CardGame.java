@@ -1,4 +1,7 @@
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -9,10 +12,13 @@ import java.util.StringTokenizer;
 public class CardGame {
     public static void main(String[] args) {
         List<Card> mainDeck = new ArrayList<>();
+        Scanner scanner = new Scanner(System.in);
 
-        // 1. Read cards from input.txt using StringTokenizer
+        System.out.print("Enter input file name (e.g., input.txt): ");
+        String inputFileName = scanner.nextLine().trim();
+
         try {
-            String fileContent = Files.readString(Path.of("input.txt")).trim();
+            String fileContent = Files.readString(Path.of(inputFileName)).trim();
             StringTokenizer tokenizer = new StringTokenizer(fileContent, ",");
 
             while (tokenizer.hasMoreTokens()) {
@@ -20,13 +26,11 @@ public class CardGame {
                 mainDeck.add(new Card(token.trim()));
             }
         } catch (IOException e) {
-            System.err.println("Fatal Error: Could not read 'input.txt'. Make sure the file exists.");
+            System.err.println("Fatal Error: Could not read '" + inputFileName + "'. Make sure the file exists.");
+            scanner.close();
             return;
         }
 
-        Scanner scanner = new Scanner(System.in);
-
-        // 2. Input and validate playersCount (2 to 8)
         int playersCount = 0;
         while (playersCount < 2 || playersCount > 8) {
             System.out.print("Enter number of players (2-8): ");
@@ -37,7 +41,6 @@ public class CardGame {
             }
         }
 
-        // 3. Input and validate shuffles (>= 1)
         int shuffles = 0;
         while (shuffles < 1) {
             System.out.print("Enter number of shuffles (>= 1): ");
@@ -48,10 +51,8 @@ public class CardGame {
             }
         }
 
-        // Output initial deck
         System.out.println("Original Deck: " + mainDeck);
 
-        // 4. Perfect riffle-shuffle simulation
         for (int i = 1; i <= shuffles; i++) {
             List<Card> half1 = new ArrayList<>();
             List<Card> half2 = new ArrayList<>();
@@ -72,10 +73,8 @@ public class CardGame {
             mainDeck = newDeck;
         }
 
-        // Output shuffled deck
         System.out.println("Shuffled Deck: " + mainDeck);
 
-        // 5. Deal cards round-robin style
         List<Player> players = new ArrayList<>();
         for (int i = 0; i < playersCount; i++) {
             players.add(new Player());
@@ -88,18 +87,18 @@ public class CardGame {
             dealIndex++;
         }
 
+        boolean[] eliminated = new boolean[playersCount];
+
         int round = 1;
         boolean hasAWinner = false;
         int winner = -1;
 
-        // 6. Primary Game Loop
         while (!hasAWinner) {
             System.out.println("\n--- Round " + round + " ---");
 
             int roundWinner = -1;
             Card roundWinnerCard = null;
 
-            // Find the first active player to anchor comparison
             for (int i = 0; i < playersCount; i++) {
                 if (!players.get(i).getDeck().isEmpty()) {
                     roundWinner = i;
@@ -112,16 +111,15 @@ public class CardGame {
                 break;
             }
 
-            System.out.println("Player " + (roundWinner+1) + " played: " + roundWinnerCard);
+            System.out.println("Player " + (roundWinner + 1) + " played: " + roundWinnerCard);
 
-            // Compare cards against all other active players
             for (int i = 0; i < playersCount; i++) {
                 if (i == roundWinner || players.get(i).getDeck().isEmpty()) {
                     continue;
                 }
 
                 Card currentCard = players.get(i).getDeck().get(0);
-                System.out.println("Player " + (i+1) + " played: " + currentCard);
+                System.out.println("Player " + (i + 1) + " played: " + currentCard);
 
                 Rank currentRank = currentCard.getRank();
                 Suit currentSuit = currentCard.getSuit();
@@ -129,12 +127,10 @@ public class CardGame {
                 Rank winnerRank = roundWinnerCard.getRank();
                 Suit winnerSuit = roundWinnerCard.getSuit();
 
-                // Evaluate ranks using enum values
                 if (currentRank.getValue() > winnerRank.getValue()) {
                     roundWinner = i;
                     roundWinnerCard = currentCard;
                 }
-                // Resolve ties using enum suit values
                 else if (currentRank.getValue() == winnerRank.getValue()) {
                     if (currentSuit.getValue() > winnerSuit.getValue()) {
                         roundWinner = i;
@@ -143,12 +139,11 @@ public class CardGame {
                 }
             }
 
-            System.out.println("Winner of Round " + round + " is Player " + (roundWinner+1));
+            System.out.println("Winner of Round " + round + " is Player " + (roundWinner + 1));
 
             players.get(roundWinner).getDeck().add(players.get(roundWinner).getDeck().get(0));
             players.get(roundWinner).getDeck().remove(0);
 
-            // 7. Collect cards from losers and append to winner's pile
             for (int i = 0; i < playersCount; i++) {
                 if (i == roundWinner) {
                     continue;
@@ -159,7 +154,14 @@ public class CardGame {
                 }
             }
 
-            System.out.println("Player " + (roundWinner+1) + " deck after Round " + round + ": " + players.get(roundWinner).getDeck());
+            System.out.println("Player " + (roundWinner + 1) + " deck after Round " + round + ": " + players.get(roundWinner).getDeck());
+
+            for (int i = 0; i < playersCount; i++) {
+                if (!eliminated[i] && players.get(i).getDeck().isEmpty()) {
+                    eliminated[i] = true;
+                    System.out.println(">>> Player " + (i + 1) + " has been ELIMINATED! <<<");
+                }
+            }
 
             try {
                 Thread.sleep(0);
@@ -168,7 +170,6 @@ public class CardGame {
                 System.out.println("Thread was interrupted, shutting down gracefully.");
             }
 
-            // 8. Check if a player holds the entire deck
             for (int i = 0; i < playersCount; i++) {
                 if (players.get(i).getDeck().size() == totalCardsCount) {
                     hasAWinner = true;
@@ -182,6 +183,27 @@ public class CardGame {
 
         if (winner != -1) {
             System.out.println("\nPlayer " + (winner + 1) + " wins!");
+
+            int fileIndex = 1;
+            File outputFile;
+            do {
+                outputFile = new File("input" + fileIndex + ".txt");
+                fileIndex++;
+            } while (outputFile.exists());
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
+                List<Card> winningDeck = players.get(winner).getDeck();
+
+                for (int i = 0; i < winningDeck.size(); i++) {
+                    writer.print(winningDeck.get(i));
+                    if (i < winningDeck.size() - 1) {
+                        writer.print(", ");
+                    }
+                }
+                System.out.println("Winning deck successfully written to: " + outputFile.getName());
+            } catch (IOException e) {
+                System.err.println("Error writing winning deck to output file: " + e.getMessage());
+            }
         }
 
         scanner.close();
