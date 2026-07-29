@@ -8,27 +8,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import enums.*;
+import models.*;
+
 
 public class CardGame {
     public static void main(String[] args) {
         List<Card> mainDeck = new ArrayList<>();
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter input file name (e.g., input.txt): ");
-        String inputFileName = scanner.nextLine().trim();
+        boolean fileLoaded = false;
 
-        try {
-            String fileContent = Files.readString(Path.of(inputFileName)).trim();
-            StringTokenizer tokenizer = new StringTokenizer(fileContent, ",");
+        while (!fileLoaded) {
+            System.out.print("Enter input file name (e.g., input.txt): ");
+            String inputFileName = scanner.nextLine().trim();
 
-            while (tokenizer.hasMoreTokens()) {
-                String token = tokenizer.nextToken();
-                mainDeck.add(new Card(token.trim()));
+            try {
+                String fileContent = Files.readString(Path.of(inputFileName)).trim();
+                StringTokenizer tokenizer = new StringTokenizer(fileContent, ",");
+
+                while (tokenizer.hasMoreTokens()) {
+                    String token = tokenizer.nextToken();
+                    mainDeck.add(new Card(token.trim()));
+                }
+
+                fileLoaded = true;
+            } catch (IOException e) {
+                System.out.println("Error: Could not read '" + inputFileName + "'. Please verify the filename and try again.\n");
             }
-        } catch (IOException e) {
-            System.err.println("Fatal Error: Could not read '" + inputFileName + "'. Make sure the file exists.");
-            scanner.close();
-            return;
         }
 
         int playersCount = 0;
@@ -39,15 +46,24 @@ public class CardGame {
             } else {
                 scanner.next();
             }
+
+            if (playersCount < 2 || playersCount > 8) {
+                System.out.println("Invalid input. Please enter a number between 2 and 8.");
+            }
         }
 
         int shuffles = 0;
         while (shuffles < 1) {
             System.out.print("Enter number of shuffles (>= 1): ");
+
             if (scanner.hasNextInt()) {
                 shuffles = scanner.nextInt();
             } else {
                 scanner.next();
+            }
+
+            if (shuffles < 1) {
+                System.out.println("Invalid input. Please enter a number greater than or equal to 1.");
             }
         }
 
@@ -95,6 +111,12 @@ public class CardGame {
 
         while (!hasAWinner) {
             System.out.println("\n--- Round " + round + " ---");
+
+            for (int i = 0; i < playersCount; i++) {
+                if (!players.get(i).getDeck().isEmpty()) {
+                    System.out.println("Player " + (i + 1) + " deck: " + players.get(i).getDeck());
+                }
+            }
 
             int roundWinner = -1;
             Card roundWinnerCard = null;
@@ -161,13 +183,6 @@ public class CardGame {
                     eliminated[i] = true;
                     System.out.println(">>> Player " + (i + 1) + " has been ELIMINATED! <<<");
                 }
-            }
-
-            try {
-                Thread.sleep(0);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.out.println("Thread was interrupted, shutting down gracefully.");
             }
 
             for (int i = 0; i < playersCount; i++) {

@@ -1,3 +1,5 @@
+package enums;
+
 public enum Suit {
     C("C", 1), S("S", 2), H("H", 3), D("D", 4);
 

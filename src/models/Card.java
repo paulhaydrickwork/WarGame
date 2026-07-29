@@ -1,3 +1,8 @@
+package models;
+
+import enums.Rank;
+import enums.Suit;
+
 public class Card {
     private final Rank rank;
     private final Suit suit;
