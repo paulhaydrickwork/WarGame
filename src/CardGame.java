@@ -15,9 +15,31 @@ import models.*;
 public class CardGame {
     public static void main(String[] args) {
         System.out.println("WELCOME TO WAR CARD GAME");
-        List<Card> mainDeck = new ArrayList<>();
         Scanner scanner = new Scanner(System.in);
 
+        List<Card> mainDeck = loadDeck(scanner);
+        int playersCount = readPlayersCount(scanner);
+        int shuffles = readShuffleCount(scanner);
+
+        System.out.println("Original Deck: " + mainDeck);
+        mainDeck = shuffle(mainDeck, shuffles);
+        System.out.println("Shuffled Deck: " + mainDeck);
+
+        List<Player> players = createPlayers(playersCount);
+        int totalCardsCount = mainDeck.size();
+        dealCards(mainDeck, players);
+
+        int winner = playGame(players, totalCardsCount);
+        if (winner != -1) {
+            System.out.println("\nPlayer " + (winner + 1) + " wins!");
+            writeWinningDeck(players.get(winner).getDeck());
+        }
+
+        scanner.close();
+    }
+
+    private static List<Card> loadDeck(Scanner scanner) {
+        List<Card> mainDeck = new ArrayList<>();
         boolean fileLoaded = false;
 
         while (!fileLoaded) {
@@ -25,7 +47,7 @@ public class CardGame {
             String inputFileName = scanner.nextLine().trim();
 
             try {
-                String fileContent = Files.readString(Path.of(inputFileName)).trim();
+                String fileContent = Files.readString(Path.of("inputs", inputFileName)).trim();
                 StringTokenizer tokenizer = new StringTokenizer(fileContent, ",");
 
                 while (tokenizer.hasMoreTokens()) {
@@ -39,6 +61,10 @@ public class CardGame {
             }
         }
 
+        return mainDeck;
+    }
+
+    private static int readPlayersCount(Scanner scanner) {
         int playersCount = 0;
         while (playersCount < 2 || playersCount > 8) {
             System.out.print("Enter number of players (2-8): ");
@@ -53,6 +79,10 @@ public class CardGame {
             }
         }
 
+        return playersCount;
+    }
+
+    private static int readShuffleCount(Scanner scanner) {
         int shuffles = 0;
         while (shuffles < 1) {
             System.out.print("Enter number of shuffles (>= 1): ");
@@ -68,8 +98,10 @@ public class CardGame {
             }
         }
 
-        System.out.println("Original Deck: " + mainDeck);
+        return shuffles;
+    }
 
+    private static List<Card> shuffle(List<Card> mainDeck, int shuffles) {
         for (int i = 1; i <= shuffles; i++) {
             List<Card> half1 = new ArrayList<>();
             List<Card> half2 = new ArrayList<>();
@@ -90,20 +122,28 @@ public class CardGame {
             mainDeck = newDeck;
         }
 
-        System.out.println("Shuffled Deck: " + mainDeck);
+        return mainDeck;
+    }
 
+    private static List<Player> createPlayers(int playersCount) {
         List<Player> players = new ArrayList<>();
         for (int i = 0; i < playersCount; i++) {
             players.add(new Player());
         }
 
-        int totalCardsCount = mainDeck.size();
+        return players;
+    }
+
+    private static void dealCards(List<Card> mainDeck, List<Player> players) {
         int dealIndex = 0;
         while (!mainDeck.isEmpty()) {
-            players.get(dealIndex % playersCount).getDeck().add(mainDeck.remove(0));
+            players.get(dealIndex % players.size()).getDeck().add(mainDeck.remove(0));
             dealIndex++;
         }
+    }
 
+    private static int playGame(List<Player> players, int totalCardsCount) {
+        int playersCount = players.size();
         boolean[] eliminated = new boolean[playersCount];
 
         int round = 1;
@@ -197,31 +237,28 @@ public class CardGame {
             round++;
         }
 
-        if (winner != -1) {
-            System.out.println("\nPlayer " + (winner + 1) + " wins!");
+        return winner;
+    }
 
-            int fileIndex = 1;
-            File outputFile;
-            do {
-                outputFile = new File("input" + fileIndex + ".txt");
-                fileIndex++;
-            } while (outputFile.exists());
+    private static void writeWinningDeck(List<Card> winningDeck) {
+        int fileIndex = 1;
+        File outputFile;
+        do {
+            outputFile = new File("inputs", "input" + fileIndex + ".txt");
+            fileIndex++;
+        } while (outputFile.exists());
 
-            try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
-                List<Card> winningDeck = players.get(winner).getDeck();
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
 
-                for (int i = 0; i < winningDeck.size(); i++) {
-                    writer.print(winningDeck.get(i));
-                    if (i < winningDeck.size() - 1) {
-                        writer.print(", ");
-                    }
+            for (int i = 0; i < winningDeck.size(); i++) {
+                writer.print(winningDeck.get(i));
+                if (i < winningDeck.size() - 1) {
+                    writer.print(", ");
                 }
-                System.out.println("Winning deck successfully written to: " + outputFile.getName());
-            } catch (IOException e) {
-                System.err.println("Error writing winning deck to output file: " + e.getMessage());
             }
+            System.out.println("Winning deck successfully written to: " + outputFile.getName());
+        } catch (IOException e) {
+            System.err.println("Error writing winning deck to output file: " + e.getMessage());
         }
-
-        scanner.close();
     }
 }
