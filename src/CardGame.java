@@ -14,6 +14,7 @@ import models.*;
 
 public class CardGame {
     public static void main(String[] args) {
+        System.out.println("WELCOME TO WAR CARD GAME");
         List<Card> mainDeck = new ArrayList<>();
         Scanner scanner = new Scanner(System.in);
 
