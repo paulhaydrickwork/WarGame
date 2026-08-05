@@ -251,7 +251,7 @@ public class CardGame {
         try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
 
             for (int i = 0; i < winningDeck.size(); i++) {
-                writer.print(winningDeck.get(i));
+                writer.print(winningDeck.get(i).toFileString());
                 if (i < winningDeck.size() - 1) {
                     writer.print(", ");
                 }

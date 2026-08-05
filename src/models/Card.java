@@ -22,8 +22,12 @@ public class Card {
         return suit;
     }
 
+    public String toFileString() {
+        return rawText;
+    }
+
     @Override
     public String toString() {
-        return rawText;
+        return rawText.substring(2) + suit.getSymbol();
     }
 }
