@@ -253,7 +253,7 @@ public class CardGame {
             for (int i = 0; i < winningDeck.size(); i++) {
                 writer.print(winningDeck.get(i).toFileString());
                 if (i < winningDeck.size() - 1) {
-                    writer.print(", ");
+                    writer.print(",");
                 }
             }
             System.out.println("Winning deck successfully written to: " + outputFile.getName());
