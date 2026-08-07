@@ -56,9 +56,6 @@ public class Deck {
         if (times < 0) {
             throw new IllegalArgumentException("Shuffle count must be at least 0.");
         }
-        if (cards.size() % 2 != 0) {
-            throw new IllegalStateException("A perfect shuffle requires an even number of cards.");
-        }
 
         for (int shuffle = 0; shuffle < times; shuffle++) {
             int middle = cards.size() / 2;

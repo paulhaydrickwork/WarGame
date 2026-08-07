@@ -67,10 +67,6 @@ public class WarGame {
             }
         }
 
-        if (roundWinner == null) {
-            throw new IllegalStateException("No player can play a card.");
-        }
-
         List<Card> wonCards = new ArrayList<>();
         wonCards.add(playedCards.get(roundWinner));
         for (Map.Entry<Player, Card> play : playedCards.entrySet()) {
